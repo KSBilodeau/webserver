@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{Context, bail};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 
@@ -35,23 +35,18 @@ fn handle_connection(
 fn main() -> anyhow::Result<()> {
     // RETRIEVE SERVER INFORMATION FROM ENVIRONMENT VARIABLES
 
-    let Ok(ip_addr) = std::env::var("SERVER_IP") else {
-        bail!("Missing server IP address envvar")
-    };
-
-    let Ok(ip_port) = std::env::var("SERVER_PORT") else {
-        bail!("Missing server port envvar")
-    };
+    let ip_addr = std::env::var("SERVER_IP").with_context(|| "Missing server IP address envvar")?;
+    let ip_port = std::env::var("SERVER_PORT").with_context(|| "Missing server port envvar")?;
 
     // BIND THE SERVER TO THE GIVEN IP ADDRESS AND PORT
 
-    let Ok(listener) = TcpListener::bind(format!("{ip_addr}:{ip_port}")) else {
-        bail!("Failed to bind to {ip_addr}:{ip_port}")
-    };
+    let listener = TcpListener::bind(format!("{ip_addr}:{ip_port}"))
+        .with_context(|| format!("Failed to bind to {ip_addr}:{ip_port}"))?;
 
     // GENERATE THE RSA KEY PAIR FOR MESSAGE ENCRYPTION
 
-    let key_pair = Arc::new(webutils::generate_key_pair()?);
+    let key_pair =
+        Arc::new(webutils::generate_key_pair().with_context(|| "Failed to generate key pair")?);
 
     // LOOP THROUGH INCOMING CONNECTIONS
 
