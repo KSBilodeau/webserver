@@ -1,4 +1,4 @@
-use anyhow::{Context, bail};
+use anyhow::Context;
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 
@@ -12,20 +12,12 @@ fn handle_connection(
 
     // CONFIRM KEYS WERE SUCCESSFULLY SWAPPED
 
-    let ack = webutils::send_message(
-        &client_public_key,
-        &key_pair.private_key,
-        &mut stream,
-        b"ACK",
-    )?;
-
-    if ack != "ACK" {
-        bail!("ACKNOWLEDGEMENT FAILED")
-    }
+    webutils::synchronize(&client_public_key, &key_pair.private_key, &mut stream)
+        .with_context(|| "Failed to synchronize with client")?;
 
     // EXECUTE MAIN SERVER LOOP
 
-    println!("ACKNOWLEDGEMENT SUCCEEDED");
+    println!("SERVER-CLIENT SYNC SUCCEEDED");
 
     loop {
         std::hint::spin_loop();
