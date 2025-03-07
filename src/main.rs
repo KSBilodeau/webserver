@@ -20,7 +20,19 @@ fn handle_connection(
     println!("SERVER-CLIENT SYNC SUCCEEDED");
 
     loop {
-        std::hint::spin_loop();
+        webutils::send_sync_message(
+            &client_public_key,
+            &key_pair.private_key,
+            &mut stream,
+            b"HEARTBEAT",
+        )
+        .with_context(|| "Failed to synchronize heartbeat")?;
+        println!(
+            "HEARTBEAT SYNCHRONIZED [Time since epoch: {:.2?}]",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?
+        );
+
+        std::thread::sleep(std::time::Duration::from_secs(5));
     }
 }
 
